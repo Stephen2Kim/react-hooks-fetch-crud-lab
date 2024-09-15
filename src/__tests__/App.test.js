@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitForElementToBeRemoved,
+  act,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
 import { server } from "../mocks/server";
@@ -27,13 +28,10 @@ test("displays question prompts after fetching", async () => {
 test("creates a new question when the form is submitted", async () => {
   render(<App />);
 
-  // wait for first render of list (otherwise we get a React state warning)
   await screen.findByText(/lorem testum 1/g);
 
-  // click form page
   fireEvent.click(screen.queryByText("New Question"));
 
-  // fill out form
   fireEvent.change(screen.queryByLabelText(/Prompt/), {
     target: { value: "Test Prompt" },
   });
@@ -47,10 +45,8 @@ test("creates a new question when the form is submitted", async () => {
     target: { value: "1" },
   });
 
-  // submit form
   fireEvent.submit(screen.queryByText(/Add Question/));
 
-  // view questions
   fireEvent.click(screen.queryByText(/View Questions/));
 
   expect(await screen.findByText(/Test Prompt/g)).toBeInTheDocument();
@@ -82,9 +78,13 @@ test("updates the answer when the dropdown is changed", async () => {
 
   await screen.findByText(/lorem testum 2/g);
 
-  fireEvent.change(screen.queryAllByLabelText(/Correct Answer/)[0], {
-    target: { value: "3" },
+  await act(async () => {
+    fireEvent.change(screen.queryAllByLabelText(/Correct Answer/)[0], {
+      target: { value: "3" },
+    });
   });
+
+  await new Promise((r) => setTimeout(r, 100));
 
   expect(screen.queryAllByLabelText(/Correct Answer/)[0].value).toBe("3");
 
